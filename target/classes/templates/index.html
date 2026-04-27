@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Certificate Authority | Immutable Diplomas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.1); }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); }
+        .toast { transition: opacity 0.3s ease; }
+    </style>
+</head>
+<body class="gradient-bg text-gray-100">
+
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <div class="inline-flex items-center justify-center p-2 bg-indigo-900/50 rounded-2xl mb-4">
+            <span class="text-5xl">🎓</span>
+        </div>
+        <h1 class="text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-400">
+            Blockchain Certificate Authority
+        </h1>
+        <p class="text-gray-300 mt-4 text-lg max-w-2xl mx-auto">
+            Issue, revoke, and verify digital diplomas with immutable blockchain proof.
+            <span class="inline-block mt-2 text-sm bg-slate-800 px-3 py-1 rounded-full">⚡ Proof-of-Work difficulty: <span th:text="${difficulty}">2</span> (hash starts with <code>00</code>)</span>
+        </p>
+    </div>
+
+    <!-- Two Main Action Cards -->
+    <div class="grid lg:grid-cols-2 gap-8 mb-12">
+        <!-- Issue Certificate Card -->
+        <div class="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-700 p-6 card-hover">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="p-2 bg-emerald-500/20 rounded-xl"><span class="text-2xl">📜</span></div>
+                <h2 class="text-2xl font-bold">Issue New Certificate</h2>
+            </div>
+            <form id="issueForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Certificate ID *</label>
+                    <input type="text" id="certId" required placeholder="e.g., CERT-2025-001" class="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 focus:ring-2 focus:ring-cyan-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Student ID *</label>
+                    <input type="text" id="studentId" required placeholder="e.g., STU12345" class="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Student Full Name *</label>
+                    <input type="text" id="studentName" required placeholder="John Doe" class="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Degree / Program *</label>
+                    <input type="text" id="degree" required placeholder="B.Sc. Computer Science" class="w-full px-4 py-2 rounded-lg bg-slate-700 border border-slate-600">
+                </div>
+                <button type="submit" id="issueBtn" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2">
+                    <span>🔗 Issue & Mine Certificate</span>
+                    <span id="issueSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Verify & Revoke Card -->
+        <div class="bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-700 p-6 card-hover">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="p-2 bg-blue-500/20 rounded-xl"><span class="text-2xl">🔍</span></div>
+                <h2 class="text-2xl font-bold">Verify / Revoke Certificate</h2>
+            </div>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Certificate ID</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="verifyCertId" placeholder="CERT-2025-001" class="flex-1 px-4 py-2 rounded-lg bg-slate-700 border border-slate-600">
+                        <button id="verifyBtn" class="bg-indigo-600 hover:bg-indigo-500 px-5 rounded-xl font-semibold transition">Verify</button>
+                    </div>
+                </div>
+                <div id="verifyResult" class="hidden p-4 rounded-xl border text-sm"></div>
+                <div class="border-t border-slate-700 pt-4">
+                    <p class="text-sm font-medium text-red-300 mb-2">⚠️ Revoke Certificate (only if issued)</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="revokeCertId" placeholder="Certificate ID to revoke" class="flex-1 px-4 py-2 rounded-lg bg-slate-700 border border-slate-600">
+                        <input type="text" id="revokeReason" placeholder="Reason" class="flex-1 px-4 py-2 rounded-lg bg-slate-700 border border-slate-600">
+                        <button id="revokeBtn" class="bg-red-700 hover:bg-red-600 px-4 rounded-xl font-bold transition">Revoke</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blockchain Ledger Display -->
+    <div class="mt-10">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold flex items-center gap-2"><span class="text-cyan-400">⛓️</span> Immutable Ledger</h2>
+            <button id="refreshBtn" class="bg-slate-700 hover:bg-slate-600 px-4 py-1.5 rounded-lg text-sm transition">⟳ Refresh</button>
+        </div>
+        <div id="chainContainer" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+            <div class="text-center text-gray-400 py-8">Loading blockchain...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed bottom-5 right-5 z-50 hidden transition-all duration-300 transform translate-y-0"></div>
+
+<script>
+    // DOM elements
+    const chainContainer = document.getElementById('chainContainer');
+    const issueBtn = document.getElementById('issueBtn');
+    const issueSpinner = document.getElementById('issueSpinner');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const revokeBtn = document.getElementById('revokeBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const verifyResult = document.getElementById('verifyResult');
+
+    function showMessage(text, isError = false) {
+        const toast = document.getElementById('toast');
+        toast.innerHTML = `<div class="px-6 py-3 rounded-xl shadow-2xl ${isError ? 'bg-red-600' : 'bg-emerald-600'} text-white font-medium">${text}</div>`;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    function truncateHash(hash, len = 10) {
+        if (!hash || hash === '0') return hash;
+        return hash.length > len ? hash.substring(0, len) + '…' : hash;
+    }
+
+    function renderChain(blocks) {
+        if (!blocks.length) {
+            chainContainer.innerHTML = '<div class="text-center text-gray-400 py-8">No blocks yet</div>';
+            return;
+        }
+        const html = blocks.map(block => {
+            let typeBadge = '';
+            let details = '';
+            if (block.blockType === 'CERTIFICATE') {
+                typeBadge = '<span class="bg-emerald-600/30 text-emerald-300 text-xs px-2 py-0.5 rounded-full">📜 CERTIFICATE</span>';
+                try {
+                    const data = JSON.parse(block.data);
+                    details = `<div class="text-sm mt-2 text-gray-300">👨‍🎓 ${data.studentName || 'N/A'} | 🎓 ${data.degree || 'N/A'} | 🆔 ${data.certificateId || 'N/A'}</div>`;
+                } catch(e) {}
+            } else if (block.blockType === 'REVOCATION') {
+                typeBadge = '<span class="bg-red-600/30 text-red-300 text-xs px-2 py-0.5 rounded-full">⚠️ REVOCATION</span>';
+                try {
+                    const data = JSON.parse(block.data);
+                    details = `<div class="text-sm mt-2 text-gray-300">❌ Revoked: ${data.certificateId} - ${data.reason || 'No reason'}</div>`;
+                } catch(e) {}
+            } else {
+                typeBadge = '<span class="bg-gray-600/30 text-gray-300 text-xs px-2 py-0.5 rounded-full">🌱 GENESIS</span>';
+            }
+            return `
+                <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-4 hover:bg-slate-800/70 transition">
+                    <div class="flex flex-wrap justify-between items-start gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg font-bold text-cyan-400">#${block.index}</span>
+                            ${typeBadge}
+                            <span class="text-xs text-gray-400">nonce: ${block.nonce}</span>
+                        </div>
+                        <span class="text-xs text-gray-400">${new Date(block.timestamp).toLocaleString()}</span>
+                    </div>
+                    ${details}
+                    <div class="grid grid-cols-2 gap-2 text-xs font-mono mt-2 pt-2 border-t border-slate-700">
+                        <div><span class="text-gray-400">🔗 Hash:</span> <span class="text-cyan-300" title="${block.hash}">${truncateHash(block.hash)}</span></div>
+                        <div><span class="text-gray-400">🔙 Prev:</span> <span class="text-cyan-300/70">${truncateHash(block.previousHash)}</span></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        chainContainer.innerHTML = html;
+    }
+
+    async function refreshBlockchain() {
+        try {
+            const res = await fetch('/api/chain');
+            const blocks = await res.json();
+            renderChain(blocks);
+        } catch(e) { showMessage('Failed to load blockchain', true); }
+    }
+
+    async function issueCertificate(event) {
+        event.preventDefault();
+        const certId = document.getElementById('certId').value.trim();
+        const studentId = document.getElementById('studentId').value.trim();
+        const studentName = document.getElementById('studentName').value.trim();
+        const degree = document.getElementById('degree').value.trim();
+        if (!certId || !studentId || !studentName || !degree) {
+            showMessage('Please fill all fields', true);
+            return;
+        }
+        issueBtn.disabled = true;
+        issueSpinner.classList.remove('hidden');
+        try {
+            const res = await fetch('/api/issue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ certificateId: certId, studentId, studentName, degree })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Issuance failed');
+            showMessage(`✅ Certificate ${certId} issued and mined! Block #${data.index}`, false);
+            document.getElementById('issueForm').reset();
+            await refreshBlockchain();
+        } catch(err) { showMessage(err.message, true); }
+        finally { issueBtn.disabled = false; issueSpinner.classList.add('hidden'); }
+    }
+
+    async function verifyCertificate() {
+        const certId = document.getElementById('verifyCertId').value.trim();
+        if (!certId) { showMessage('Enter Certificate ID', true); return; }
+        try {
+            const res = await fetch(`/api/verify/${encodeURIComponent(certId)}`);
+            const data = await res.json();
+            if (!data.exists && data.message) {
+                verifyResult.innerHTML = `<div class="text-red-300">❌ ${data.message}</div>`;
+            } else if (data.revoked) {
+                verifyResult.innerHTML = `<div class="bg-red-900/40 border border-red-500 p-3 rounded-lg">
+                    <span class="font-bold text-red-300">❌ REVOKED</span><br/>
+                    Student: ${data.studentName}<br/>
+                    Degree: ${data.degree}<br/>
+                    Revoked: ${data.revocationReason || 'No reason'} on ${data.formattedRevokedAt || 'unknown'}</div>`;
+            } else if (data.certificateId) {
+                verifyResult.innerHTML = `<div class="bg-emerald-900/40 border border-emerald-500 p-3 rounded-lg">
+                    <span class="font-bold text-emerald-300">✅ VALID & ACTIVE</span><br/>
+                    Student: ${data.studentName}<br/>
+                    Degree: ${data.degree}<br/>
+                    Issued: ${data.formattedIssueDate}</div>`;
+            } else {
+                verifyResult.innerHTML = `<div class="text-yellow-300">⚠️ Certificate not found</div>`;
+            }
+            verifyResult.classList.remove('hidden');
+        } catch(e) { showMessage('Verification error', true); }
+    }
+
+    async function revokeCertificate() {
+        const certId = document.getElementById('revokeCertId').value.trim();
+        const reason = document.getElementById('revokeReason').value.trim() || 'No reason provided';
+        if (!certId) { showMessage('Enter Certificate ID to revoke', true); return; }
+        try {
+            const res = await fetch('/api/revoke', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ certificateId: certId, reason })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Revocation failed');
+            showMessage(`⚠️ Certificate ${certId} revoked!`, false);
+            await refreshBlockchain();
+            document.getElementById('revokeCertId').value = '';
+            document.getElementById('revokeReason').value = '';
+            // auto verify to show updated status
+            document.getElementById('verifyCertId').value = certId;
+            verifyCertificate();
+        } catch(e) { showMessage(e.message, true); }
+    }
+
+    issueBtn.addEventListener('click', issueCertificate);
+    verifyBtn.addEventListener('click', verifyCertificate);
+    revokeBtn.addEventListener('click', revokeCertificate);
+    refreshBtn.addEventListener('click', refreshBlockchain);
+    refreshBlockchain();
+</script>
+</body>
+</html>
